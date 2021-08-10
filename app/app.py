@@ -3,7 +3,7 @@ import pandas as pd
 from flask import Flask, render_template
 from joblib import load
 
-from pipeline_api import data_distr, corr_matrix, model_stats, plot_roc, prec_rec
+from app.pipeline_api import data_distr, corr_matrix, model_stats, plot_roc, prec_rec
 
 app = Flask(__name__)
 rf_classifier = load("./models/rf_model.pkl")
