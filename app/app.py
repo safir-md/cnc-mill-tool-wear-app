@@ -6,14 +6,14 @@ from joblib import load
 from app.pipeline_api import data_distr, corr_matrix, model_stats, plot_roc, prec_rec
 
 app = Flask(__name__)
-rf_classifier = load("./models/rf_model.pkl")
-dt_classifier = load("./models/dt_model.pkl")
-X_train_DT = pd.read_csv('./data/X_train_DT.csv')
-X_test_DT = pd.read_csv('./data/X_test_DT.csv')
-X_train_RF = pd.read_csv('./data/X_train_RF.csv')
-X_test_RF = pd.read_csv('./data/X_test_RF.csv')
-Y_train = pd.read_csv('./data/Y_train.csv')
-Y_test = pd.read_csv('./data/Y_test.csv')
+rf_classifier = load("app/models/rf_model.pkl")
+dt_classifier = load("app/models/dt_model.pkl")
+X_train_DT = pd.read_csv('app/data/X_train_DT.csv')
+X_test_DT = pd.read_csv('app/data/X_test_DT.csv')
+X_train_RF = pd.read_csv('app/data/X_train_RF.csv')
+X_test_RF = pd.read_csv('app/data/X_test_RF.csv')
+Y_train = pd.read_csv('app/data/Y_train.csv')
+Y_test = pd.read_csv('app/data/Y_test.csv')
 
 @app.route("/")
 def disp_home():
