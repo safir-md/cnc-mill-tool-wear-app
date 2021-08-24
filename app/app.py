@@ -15,11 +15,11 @@ X_test = pd.read_csv('app/data/X_test.csv')
 Y_train = pd.read_csv('app/data/Y_train.csv')
 Y_test = pd.read_csv('app/data/Y_test.csv')
 
-@app.route("/")
+@app.route("/", methods=['GET', 'POST'])
 def disp_home():
     
     print("AHAD")
-    return "Allahu Akbar"
+    return render_template('index.html')
 
 @app.route("/data_distribution")
 def data_distribution():
