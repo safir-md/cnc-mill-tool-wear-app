@@ -25,7 +25,35 @@ Saﬁr Mohammad Shaikh
 2. Prometheus, Grafana
 * Containerization: Docker, Docker Compose
 
-## How to Run?
+## Run the App Locally?
+1. Clone the Repository:
+```sh
+git clone https://github.com/Safir-Mohammad-Mustak-Shaikh/cnc-mill-tool-wear-app.git
+cd cnc-mill-tool-wear-app
+```
+2. Execute following commands in the Terminal:
+```sh
+source .env/bin/activate        # Linux
+pip3 install -r requirements.txt
+flask run
+```
+3. The app is now running on Localhost
+
+## Run the App in Docker Container?
+1. Clone the Repository:
+```sh
+git clone https://github.com/Safir-Mohammad-Mustak-Shaikh/cnc-mill-tool-wear-app.git
+cd cnc-mill-tool-wear-app
+```
+2. Execute following commands in the Terminal:
+```sh
+source .env/bin/activate        # Linux
+docker image build -t cnc-mill-tool-wear-app .
+docker run -it -p 5000:5000 cnc-mill-tool-wear-app
+```
+3. The app is now running in the Docker Container
+
+## Run the App on Heroku?
 1. Clone the Repository:
 ```sh
 git clone https://github.com/Safir-Mohammad-Mustak-Shaikh/cnc-mill-tool-wear-app.git
