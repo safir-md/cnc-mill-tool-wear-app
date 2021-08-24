@@ -1,0 +1,318 @@
+Metadata-Version: 2.1
+Name: Flask-MonitoringDashboard
+Version: 3.1.0
+Summary: Automatically monitor the evolving performance of Flask/Python web services.
+Home-page: https://github.com/flask-dashboard/Flask-MonitoringDashboard
+Author: Patrick Vogel, Bogdan Petre
+Author-email: flask.monitoringdashboard@gmail.com
+License: UNKNOWN
+Project-URL: Bug Reports, https://github.com/flask-dashboard/Flask-MonitoringDashboard/issues
+Project-URL: PyPi, https://pypi.org/project/Flask-MonitoringDashboard/
+Project-URL: Documentation, http://flask-monitoringdashboard.readthedocs.io/
+Project-URL: Source, https://github.com/flask-dashboard/Flask-MonitoringDashboard/
+Platform: Any
+Classifier: Environment :: Web Environment
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Framework :: Flask
+Requires-Dist: click
+Requires-Dist: apscheduler
+Requires-Dist: flask (>=0.9)
+Requires-Dist: jinja2 (==2.11.1)
+Requires-Dist: sqlalchemy (>=1.1.9)
+Requires-Dist: configparser
+Requires-Dist: psutil
+Requires-Dist: colorhash
+Requires-Dist: numpy
+Requires-Dist: pytz
+Requires-Dist: tzlocal
+Requires-Dist: scipy
+
+Flask Monitoring Dashboard
+==========================
+
+A dashboard for automatic monitoring of Flask (http://flask.pocoo.org/) web-services.
+
+Key Features
+------------
+The Flask Monitoring Dashboard is an extension for Flask applications that offers four main functionalities with little effort from the Flask developer:
+
+- **Monitor the performance and utilization:**
+  The Dashboard allows you to see which endpoints process a lot of requests and how fast.
+  Additionally, it provides information about the evolving performance of an endpoint throughout different versions if you're using git.
+
+- **Profile requests and endpoints:**
+  The execution path of every request is tracked and stored into the database. This allows you to gain
+  insight over which functions in your code take the most time to execute. Since all requests for an
+  endpoint are also merged together, the Dashboard provides an overview of which functions are used in
+  which endpoint.
+
+- **Collect extra information about outliers:**
+  Outliers are requests that take much longer to process than regular requests.
+  The Dashboard automatically detects that a request is an outlier and stores extra information about it (stack trace, request values, Request headers, Request environment).
+
+- **Collect additional information about your Flask-application:**
+  Suppose you have an User-table and you want to know how many users are registered on your Flask-application.
+  Then, you can run the following query: 'SELECT Count(*) FROM USERS;'. But this is just annoying to do regularly.
+  Therefore, you can configure this in the Flask-MonitoringDashboard, which will provide you this information per day (or other time interval).
+
+
+The dashboard is automatically added to your existing Flask application.
+You can view the results by default using the default endpoint (this can be configured to another route):
+
+   http://localhost:5000/dashboard
+
+For more advanced documentation, take a look at the information
+on `this site`_
+
+.. _this site: _http://flask-monitoringdashboard.readthedocs.io/en/latest/functionality.html
+
+
+How to use
+============
+
+Installation
+------------
+
+To install from source, download the source code, then run this:
+
+    python setup.py install
+
+Or install with pip:
+
+    pip install flask_monitoringdashboard
+
+Setup
+------------
+Adding the extension to your Flask app is simple:
+
+    from flask import Flask
+    import flask_monitoringdashboard as dashboard
+
+    app = Flask(__name__)
+    dashboard.bind(app)
+
+Live Demo
+------------
+To view a live deployment of the Flask-MonitoringDashboard, `check this site`_
+
+.. _`check this site`: https://flask-monitoringdashboard.herokuapp.com/
+
+Use the credentials u:`admin`, p:`admin` to log in.
+
+Feedback
+------------
+In order to improve our Flask-MonitoringDashboard, we would like to hear from you! Therefore, we made a questionnaire
+with a few questions. Filling in this form takes less than 3 minutes. You can find the form `here
+<https://goo.gl/forms/IqRrjGDDXe44q5ZV2>`_.
+
+Alternatively, feel free to write to `our email-address
+<mailto:flask.monitoringdashboard@gmail.com>`_.
+
+Documentation
+-------------
+For more advanced documentation, `see this site
+<http://flask-monitoringdashboard.readthedocs.io>`_
+If you run into trouble migrating from version 1.X.X to version 2.0.0, this site will help you solve this too.
+The migration from 2.X.X to 3.0.0 should be easier.
+
+
+License
+------------
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+Change Log
+=========================================================================
+
+All notable changes to this project will be documented in this file.
+This project adheres to `Semantic Versioning <http://semver.org/>`_.
+Please note that the changes before version 1.10.0 have not been documented.
+
+v3.1.0
+----------
+Changed
+
+- Added support for Python 3.8
+- Started using pytest instead of python's unittest
+- Started using Webpack for frontend packaging
+- Improved reports
+- Moved to Github Actions from Travis for CI/CD
+- Improved docstrings
+- Various bug fixes
+
+
+v3.0.9
+----------
+Changed
+
+- Fixed upgrade message bug
+- Fixed Heroku deployment
+
+
+v3.0.8
+----------
+Changed
+
+- Fixed the changelog; functionality is the same as 3.0.7 :)
+
+
+v3.0.7 
+----------
+Changed
+
+- Added a first version of the Reporting functionality
+- Improved usability of the overview table
+- Fixed the issue with some table columns being sorted as text as opposed to numbers
+- A few other bug fixes
+
+
+v3.0.6
+----------
+Changed
+
+- Removed profiler feature from monitoring level 2
+- Added outlier detection feature to monitoring level 3
+- Configurable profiler sampling period, with 5 ms default
+- Implemented an in-memory cache for performance improvements
+
+v3.0.0
+----------
+Changed
+
+- Tracking also status codes
+- Display times as numbers to make them sortable
+- Add leading slash to blueprint paths
+- Added status codes with corresponding views
+
+v2.1.1
+----------
+Changed
+
+- Default monitoring level is now 1
+- Fixed bug causing config file not being parsed
+- Monitoring level can be set from the 'detail' section
+- Improved README
+
+v2.1.0
+----------
+Changed
+
+- Frontend is now using AngularJS
+- Removed TestMonitor
+- Added Custom graphs
+- Fixed Issue #206
+- Added support for Python 3.7
+- Updated documentation
+- Updated unit tests
+
+v2.0.7
+----------
+Changed
+
+- Fixed Issue #174
+
+- Fixed issue with profiler not going into code
+
+- Implemented a Sunburst visualization of the Grouped Profiler
+
+- Improved test coverage
+
+- Improved python-doc
+
+- Added functionality to download the outlier data
+
+- Dropped support for Python 3.3 and 3.4
+
+
+v2.0.0
+----------
+Changed
+
+- Added a configuration option to prefix a table in the database
+
+- Optimize queries, such that viewing data is faster
+
+- Updated database scheme
+
+- Implemented functionality to customize time window of graphs
+
+- Implemented a profiler for Request profiling
+
+- Implemented a profiler for Endpoint profiling
+
+- Refactored current code, which improves readability
+
+- Refactoring of Test-Monitoring page
+
+- Identify testRun by Travis build number
+
+
+v1.13.0
+----------
+Changed
+
+- Added boxplot of CPU loads
+
+- Updated naming scheme of all graphs
+
+- Implemented two configuration options: the local timezone and the option to automatically monitor new endpoints
+
+- Updated the Test-Monitoring initialization
+
+- Updated Database support for MySQL
+
+v1.12.0
+-------
+Changed
+
+- Removed two graphs: hits per hour and execution time per hour
+
+- New template design
+
+- Refactored backhand of the code
+
+- Updated Bootstrap 3.0 to 4.0
+
+- Setup of Code coverage
+
+
+v1.11.0
+-------
+Changed
+
+- Added new graph: Version usage
+
+- Added column (Hits in past 7 days) in Measurements Overview
+
+- Fixed bug with configuration
+
+- Changed rows and column in outlier-table
+
+- Added TODO List
+
+- Updated functionality to retrieve the stacktrace of an Outlier
+
+- Fixed bug with white colors from the config option
+
+
+v1.10.0
+----------
+Changed
+
+- Added security for automatic endpoint-data retrieval.
+
+- Added test for export_data-endpoints
+
+- Added MIT License.
+
+- Added documentation
+
+

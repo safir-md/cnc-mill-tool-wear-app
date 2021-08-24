@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -80,12 +81,14 @@ def split_data(dataframe):
 def feat_select(classifier, X, X_train, X_test):
     importances = list(classifier.feature_importances_)
     feature_list = list(X.columns)
-    feature_importances = [(feature, round(importance, 4)) for feature, importance in zip(feature_list, importances)]
+    feature_importances = [(feature, round(importance, 4)) for feature, importance in zip(feature_list, importances) if round(importance, 4)>=0.02]
     feature_importances = sorted(feature_importances, key = lambda x: x[1], reverse = True)
 
     importances.sort(reverse=True)
     cumulative_importances = np.cumsum(importances)
-    feature_count = np.where(cumulative_importances > 0.95)[0][0] + 1                               # Number of Features to keep
+    feature_count = np.where(cumulative_importances > 0.95)[0][0] + 1
+    # Number of Features to keep
+    feature_count = feature_count if feature_count<=len(feature_importances) else len(feature_importances)
     imp_feature_names = [feature[0] for feature in feature_importances[0:feature_count]]
 
     X_train_NEW = X_train.loc[:, imp_feature_names]
@@ -93,7 +96,7 @@ def feat_select(classifier, X, X_train, X_test):
     print("Features Selected")
     return X_train_NEW, X_test_NEW
 
-def dec_tr_model(X, X_train, X_test, Y_train, Y_test):
+def dec_tr_model(X, X_train, X_test, Y_train):
     classifier_dt_1 = DecisionTreeClassifier(criterion = 'gini', random_state = 0)
     classifier_dt_1.fit(X_train, Y_train)
 
@@ -125,12 +128,9 @@ def dec_tr_model(X, X_train, X_test, Y_train, Y_test):
     dump(random_dt_model.best_estimator_, pkl_file)
     print("Model Trained")
 
-    Y_pred = random_dt_model.best_estimator_.predict(X_test_DT)
-    acc = round(accuracy_score(Y_test, Y_pred), ndigits=4)
-    print("Model is Ready")
-    return X_test_DT, acc, random_dt_model.best_estimator_
+    return X_test_DT, random_dt_model.best_estimator_
 
-def rf_model(X, X_train, X_test, Y_train, Y_test):
+def rf_model(X, X_train, X_test, Y_train):
     classifier_rf_1 = RandomForestClassifier(n_estimators = 200, criterion = 'gini', random_state = 0)
     classifier_rf_1.fit(X_train, Y_train)
 
@@ -166,9 +166,23 @@ def rf_model(X, X_train, X_test, Y_train, Y_test):
     dump(random_rf_model.best_estimator_, pkl_file)
     print("Model Trained")
 
-    Y_pred = random_rf_model.best_estimator_.predict(X_test_RF)
-    acc = round(accuracy_score(Y_test, Y_pred), ndigits=4)
-    return X_test_RF, acc, random_rf_model.best_estimator_
+    return X_test_RF, random_rf_model.best_estimator_
+
+def compare_models(acc_dt, acc_rf):
+    if acc_rf>=acc_dt:
+        os.remove('app/models/dt_model.pkl')
+        os.rename('app/models/rf_model.pkl','app/models/classifier.pkl')
+        os.remove('app/data/X_train_DT.csv')
+        os.remove('app/data/X_test_DT.csv')
+        os.rename('app/data/X_train_RF.csv', 'app/data/X_train.csv')
+        os.rename('app/data/X_test_RF.csv', 'app/data/X_test.csv')
+    else:
+        os.remove('app/models/rf_model.pkl')
+        os.rename('app/models/dt_model.pkl','app/models/classifier.pkl')
+        os.remove('app/data/X_train_RF.csv')
+        os.remove('app/data/X_test_RF.csv')
+        os.rename('app/data/X_train_DT.csv', 'app/data/X_train.csv')
+        os.rename('app/data/X_test_DT.csv', 'app/data/X_test.csv')
 
 def model_stats(classifier, X_test, Y_test):
     Y_pred = classifier.predict(X_test)
@@ -179,11 +193,47 @@ def model_stats(classifier, X_test, Y_test):
     print("All Done",acc)
     return cm, acc, f1, corcoeff
 
-def compare_models(acc_dt, classifier_dt, acc_rf, classifier_rf):
-    if acc_rf>=acc_dt:
-        return classifier_rf
-    else:
-        return classifier_dt
+def retrain_model():    
+    dataframe = fetch_data()
+    dataframe = feat_engg(dataframe)
+    dataframe_copy = dataframe
+    X, X_train, X_test, Y_train, Y_test = split_data(dataframe)
+    X_test_RF, rf_classifier = rf_model(X, X_train, X_test, Y_train)
+    _, acc_rf, _, _ = model_stats(rf_classifier, X_test_RF, Y_test)
+
+
+    X, X_train, X_test, Y_train, Y_test = split_data(dataframe_copy)
+    X_test_DT, dt_classifier = dec_tr_model(X, X_train, X_test, Y_train)
+    _, acc_dt, _, _ = model_stats(dt_classifier, X_test_DT, Y_test)
+
+    compare_models(acc_dt, acc_rf)
+
+"""
+Visualization | Graphs | Charts
+"""
+
+def prec_rec(classifier, X_test, Y_test):
+    Y_test_score = classifier.predict_proba(X_test)[:, 1]
+    average_precision = average_precision_score(Y_test, Y_test_score)
+    disp = plot_precision_recall_curve(classifier, X_test, Y_test)
+    disp.ax_.set_title('2-class Precision-Recall curve: '
+                   'AP={0:0.2f}'.format(average_precision))
+    plt.savefig('app/static/prec_rec.svg', bbox_inches='tight')
+
+def plot_roc(classifier, X_test, y_test):
+    y_test_score = classifier.predict_proba(X_test)[:, 1]
+    fpr, tpr, _ = roc_curve(y_test, y_test_score)
+    roc_auc = auc(fpr, tpr)
+    plt.figure()
+    plt.plot(fpr, tpr, label="ROC curve (area = %0.2f)" % roc_auc)
+    plt.plot([0, 1], [0, 1], "k--")
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title("Receiver operating characteristic")
+    plt.legend(loc="lower right")
+    plt.savefig('app/static/roc.svg', bbox_inches='tight')
 
 def data_distr(data, figsizes, cols, shareys=True, colors='green'):
     ref = 0 
@@ -234,43 +284,3 @@ def corr_matrix(dataframe):
     plt.yticks(rotation=0)
     plt.savefig('app/static/cor_mat.svg', bbox_inches='tight')
     #return plt.show()
-
-def plot_roc(classifier, X_test, y_test):
-    y_test_score = classifier.predict_proba(X_test)[:, 1]
-    fpr, tpr, _ = roc_curve(y_test, y_test_score)
-    roc_auc = auc(fpr, tpr)
-    plt.figure()
-    plt.plot(fpr, tpr, label="ROC curve (area = %0.2f)" % roc_auc)
-    plt.plot([0, 1], [0, 1], "k--")
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel("False Positive Rate")
-    plt.ylabel("True Positive Rate")
-    plt.title("Receiver operating characteristic")
-    plt.legend(loc="lower right")
-    plt.savefig('app/static/roc.svg', bbox_inches='tight')
-
-def prec_rec(classifier, X_test, Y_test):
-    Y_test_score = classifier.predict_proba(X_test)[:, 1]
-    average_precision = average_precision_score(Y_test, Y_test_score)
-    disp = plot_precision_recall_curve(classifier, X_test, Y_test)
-    disp.ax_.set_title('2-class Precision-Recall curve: '
-                   'AP={0:0.2f}'.format(average_precision))
-    plt.savefig('app/static/prec_rec.svg', bbox_inches='tight')
-    
-    
-
-"""
-dataframe = fetch_data()
-dataframe = feat_engg(dataframe)
-X, X_train, X_test, Y_train, Y_test = split_data(dataframe)
-X_test_RF, acc, classifier = rf_model(X, X_train, X_test, Y_train, Y_test)
-cm, acc, f1, corcoeff = model_stats(classifier, X_test_RF, Y_test)
-
-
-dataframe = fetch_data()
-dataframe = feat_engg(dataframe)
-X, X_train, X_test, Y_train, Y_test = split_data(dataframe)
-X_test_DT, acc, classifier = dec_tr_model(X, X_train, X_test, Y_train, Y_test)
-cm, acc, f1, corcoeff = model_stats(classifier, X_test_DT, Y_test)
-"""
