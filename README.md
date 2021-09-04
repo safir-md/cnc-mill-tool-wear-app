@@ -33,7 +33,7 @@ cd cnc-mill-tool-wear-app
 ```
 2. Execute following commands in the Terminal:
 ```sh
-source .env/bin/activate        # Linux
+source env/bin/activate        # Linux
 pip3 install -r requirements.txt
 flask run
 ```
@@ -47,7 +47,7 @@ cd cnc-mill-tool-wear-app
 ```
 2. Execute following commands in the Terminal:
 ```sh
-source .env/bin/activate        # Linux
+source env/bin/activate        # Linux
 docker image build -t cnc-mill-tool-wear-app .
 docker run -it -p 5000:5000 cnc-mill-tool-wear-app
 ```

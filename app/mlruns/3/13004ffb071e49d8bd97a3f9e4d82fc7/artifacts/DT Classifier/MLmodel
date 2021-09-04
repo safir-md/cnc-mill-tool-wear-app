@@ -1,0 +1,13 @@
+artifact_path: DT Classifier
+flavors:
+  python_function:
+    env: conda.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    python_version: 3.8.10
+  sklearn:
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 0.24.2
+run_id: 13004ffb071e49d8bd97a3f9e4d82fc7
+utc_time_created: '2021-09-04 00:57:17.085855'

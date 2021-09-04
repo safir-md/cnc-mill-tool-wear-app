@@ -1,0 +1,15 @@
+artifact_uri: app/ml_runs/2/1b2cf9b166cd480b9ea3b654e443eb25/artifacts
+end_time: 1630715221461
+entry_point_name: ''
+experiment_id: '2'
+lifecycle_stage: active
+name: ''
+run_id: 1b2cf9b166cd480b9ea3b654e443eb25
+run_uuid: 1b2cf9b166cd480b9ea3b654e443eb25
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1630715218887
+status: 3
+tags: []
+user_id: safir-mohammad

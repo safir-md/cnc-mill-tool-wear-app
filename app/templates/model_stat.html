@@ -1,12 +1,332 @@
-<center>
+<!-- <center>
     <h1>Model Statistics</h1>
     <h2>Accuracy: {{ acc }}%</h2>
     <h2>F1 Score: {{ f1 }}</h2>
     <h2>Matthews Correlation Coefficient: {{ mcc }}</h2>
     <h2>Confusion Matrix: {{ cm }}</h2>
+
+    <h2>Anchor Explainator</h2>
+    <h3>Anchor: {{ anch }}</h3>
+    <h3>Prediction: {{ prd }}</h3>
+    <h3>Precision: {{ prc }}</h3>
+    <h3>Coverage: {{ cvr }}</h3>
+    
     <h2>ROC Curve</h2>
     <img src="static/roc.svg"/>
     
     <h2>Precision-Recall Curve</h2>
     <img src="static/prec_rec.svg"/>
-</center>
+
+    <h2>LIME Explainator</h2>
+    <iframe src="static/lime_expl.html" height="200" width="950"></iframe>
+
+    <h2>SHAP Explainator</h2>
+    <img src="static/shap_exp_1.svg"/>
+    <img src="static/shap_exp_2.png"/>
+
+    <h2>Global Surrogate</h2>
+    <img src="static/tree_expl.svg"/>
+</center> -->
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='mystyle.css')}}"> 
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel='stylesheet' href="{{ url_for('static', filename='fontawesome/css/fontawesome.min.css')}}">
+    <link rel='stylesheet' href="{{ url_for('static', filename='fontawesome/css/solid.min.css')}}">
+    <link rel='stylesheet' href="{{ url_for('static', filename='fontawesome/css/brands.min.css')}}">
+    <title>Model Statistics</title>
+  </head>
+  <body>
+      <header>
+          <!-- Fixed navbar -->
+<nav class="navbar navbar-expand-md navbar-light fixed-top bg-light">
+    <a class="navbar-brand" href="#"> CNC Mill Tool Wear App</a>
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-toggle="collapse"
+      data-target="#navbarCollapse"
+      aria-controls="navbarCollapse"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarCollapse">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+          <a class="nav-link active" href="/">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="model_behaviour">Model Behaviour</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="data_distribution">Data Distribution</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="dashboard" target="_blank">App Dashboard</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="model_monitoring" target="_blank">Model Monitoring</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="retrain">Retrain Model?</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+      </header>
+    <div class="container">
+    <div class="row">
+        <div class="col-xs-12">
+          <h1 class="p-3">
+            <small class="text-muted">Model Statistics</small>
+          </h1>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-3">
+          <div class="card bg-light mb-3" style="max-width: 18rem">
+            <div class="card-header"><h5>Accuracy</h5></div>
+            <div class="card-body">
+              <p class="card-text">{{ acc }}%</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="card bg-light mb-3" style="max-width: 18rem">
+            <div class="card-header"><h5>Precision Score</h5></div>
+            <div class="card-body">
+              <p class="card-text">{{ prcs }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="card bg-light mb-3" style="max-width: 18rem">
+            <div class="card-header"><h5>Recall Score</h5></div>
+            <div class="card-body">
+              <p class="card-text">{{ rcl }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="card bg-light mb-3" style="max-width: 18rem">
+            <div class="card-header"><h5>F1 Score</h5></div>
+            <div class="card-body">
+              <p class="card-text">{{ f1 }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="card bg-light mb-3" style="max-width: 18rem">
+            <div class="card-header"><h5>Matthews Correlation Coefficient</h5></div>
+            <div class="card-body">
+              <p class="card-text">{{ mcc }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-3">
+          <div class="card bg-light mb-3" style="max-width: 18rem">
+            <div class="card-header"><h5>Confusion Matrix</h5></div>
+            <div class="card-body">
+              <p class="card-text">{{ cm }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="card bg-light mb-3">
+            <div class="card-header"><h5>Anchor Explainator</h5></div>
+            <div class="card-body">
+              <p class="card-text">
+                Anchor: {{ anch }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-sm-4">
+          <div class="card bg-light mb-3" style="max-width: 18rem">
+            <div class="card-header"><h5>Prediction</h5></div>
+            <div class="card-body">
+              <p class="card-text">{{ prd }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="card bg-light mb-3" style="max-width: 18rem">
+            <div class="card-header"><h5>Precision</h5></div>
+            <div class="card-body">
+              <p class="card-text">{{ prc }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="card bg-light mb-3" style="max-width: 18rem">
+            <div class="card-header"><h5>Coverage</h5></div>
+            <div class="card-body">
+              <p class="card-text">{{ cvr }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-sm-6">
+          <div class="card bg-light text-black mb-3">
+            <div class="card-header"><h5>ROC Curve</h5></div>
+            <div class="card-body">
+              <img
+                class="img-fluid"
+                src="static/roc.svg"
+                class="card-img"
+                alt="..."
+              />
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="card bg-light text-black mb-3">
+            <div class="card-header"><h5>Precision-Recall Curve</h5></div>
+            <div class="card-body">
+              <img
+                class="img-fluid"
+                src="static/prec_rec.svg"
+                class="card-img"
+                alt="..."
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="card bg-light text-black mb-3">
+            <div class="card-header"><h5>LIME Explainator</h5></div>
+            <div class="card-body">
+              <img
+                class="img-fluid"
+                src="static/lime_expl.jpeg"
+                class="card-img"
+                alt="..."
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="card bg-light text-black mb-3">
+            <div class="card-header"><h5>SHAP Explainator</h5></div>
+            <div class="card-body">
+              <img
+                class="img-fluid"
+                src="static/shap_exp_1.svg"
+                class="card-img"
+                alt="..."
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="card bg-light text-black mb-3">
+            <div class="card-body">
+              <img
+                class="img-fluid"
+                src="static/shap_exp_2.png"
+                class="card-img"
+                alt="..."
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="card bg-light text-black mb-3">
+            <div class="card-header"><h5>Global Surrogate</h5></div>
+            <div class="card-body">
+              <img
+                class="img-fluid"
+                src="static/tree_expl.svg"
+                class="card-img"
+                alt="..."
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+      
+              <!-- Site footer -->
+              <footer class="site-footer">
+                <div class="container">
+                  <div class="row">
+          
+                    <div class="col-xs-6 col-md-3 customized-footer-block-text">
+                      <h6>Project By</h6>
+                      <ul class="footer-links">
+                        <li>Safir Mohammad Mustak Shaikh</li>
+                        <li>Email :- safirmd47@gmail.com</li>
+                      </ul>
+                    </div>
+                    
+                    <div class="col-xs-6 col-md-3 customized-footer-block-text1">
+                      <h6>Guidance By</h6>
+                      <ul class="footer-links">
+                        <li>Prof. Dr. Peter Nauth</li>
+                        <li>Email :- pnauth@fb2.fra-uas.de</li>
+                        <li>Hendrik Mende M.Sc.</li>
+                        <li>Email :- hendrik.mende@ipt.fraunhofer.de</li>
+                      </ul>
+                    </div>
+                    
+                    <div class="customized-footer-block-images">
+                      <img src="static/fra_logo.svg" class="p-3 img-fluid" alt="FRA UAS Logo" style="width:220px;height:160px;">
+                    </div>
+                    <div class="customized-footer-block-images">
+                      <img src="static/fr_logo.png" class="p-3 img-fluid" alt="FRAUN IPT Logo" style="margin-top: 40px;width: 200px;height: 90px;">
+                    </div>
+                    </div>
+                  </div>
+                  <hr>
+                </div>
+                <div class="container">
+                  <div class="row">
+                    <div class="col-md-8 col-sm-6 col-xs-12 customized-footer-block-text">
+                      <p class="copyright-text">Copyright &copy; 2021 - Safir Mohammad Mustak Shaikh
+                      </p>
+                    </div>
+                    <div class="col-md-4 col-sm-6 col-xs-12 customized-footer-block-logos">
+                      <ul class="social-icons">
+                        <li><a class="github" href="https://github.com/safir-md/cnc-mill-tool-wear-app"><i class="fab fa-github"></i></a></li>
+                        <li><a class="linkedin" href="https://www.linkedin.com/in/safir-mohammad-shaikh-%F0%9F%8E%93-8a9396b6/"><i class="fab fa-linkedin"></i></a></li>
+                        <li><a class="xing" href="https://www.xing.com/profile/SafirMohammad_Shaikh/cv"><i class="fab fa-xing"></i></a></li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+          </footer>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+  </body>
+</html>

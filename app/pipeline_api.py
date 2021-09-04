@@ -1,19 +1,30 @@
 import os
+import lime
+import shap
+import mlflow
+import mlflow.sklearn
+import lime.lime_tabular
+
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+from anchor import utils
+from anchor import anchor_tabular
 from scipy.cluster.hierarchy import linkage, fcluster
 from scipy.spatial.distance import squareform
 
 from joblib import dump
 
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import matthews_corrcoef, f1_score, average_precision_score
+from sklearn.tree import plot_tree, DecisionTreeClassifier
+from sklearn.inspection import plot_partial_dependence
+from sklearn.metrics import matthews_corrcoef, f1_score, average_precision_score, precision_score, recall_score
 from sklearn.metrics import confusion_matrix, accuracy_score, roc_curve, auc, plot_precision_recall_curve
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
+
+mlflow.set_tracking_uri('app/mlruns')
 
 def fetch_data():
     dataset = pd.read_csv('app/data/train.csv')
@@ -118,11 +129,18 @@ def dec_tr_model(X, X_train, X_test, Y_train):
                     'criterion': criterion}
 
     base_dt_model = DecisionTreeClassifier()
-    random_dt_model = RandomizedSearchCV(estimator=base_dt_model,
-                                            param_distributions=random_grid,
-                                            n_iter=200, cv=5, verbose=2,
-                                            random_state=0, n_jobs=-1)
-    classifier_dt_2 = random_dt_model.fit(X_train_DT, Y_train)
+
+    mlflow.set_tracking_uri('app/mlruns')
+    dec_exp_id = mlflow.set_experiment("Decision-Tree Experiment")
+    with mlflow.start_run(experiment_id=dec_exp_id):
+        random_dt_model = RandomizedSearchCV(estimator=base_dt_model,
+                                                param_distributions=random_grid,
+                                                n_iter=200, cv=5, verbose=2,
+                                                random_state=0, n_jobs=-1)
+        classifier_dt_2 = random_dt_model.fit(X_train_DT, Y_train)
+
+        mlflow.log_params(random_grid)
+        mlflow.sklearn.log_model(random_dt_model.best_estimator_, "DT Classifier")
 
     pkl_file = "app/models/dt_model.pkl"
     dump(random_dt_model.best_estimator_, pkl_file)
@@ -156,11 +174,18 @@ def rf_model(X, X_train, X_test, Y_train):
                     'bootstrap': bootstrap}
 
     base_rf_model = RandomForestClassifier()
-    random_rf_model = RandomizedSearchCV(estimator=base_rf_model,
-                                            param_distributions=random_grid,
-                                            n_iter=100, cv=3, verbose=2,
-                                            random_state=0, n_jobs=-1)
-    classifier_rf_2 = random_rf_model.fit(X_train_RF, Y_train)
+
+    mlflow.set_tracking_uri('app/mlruns')
+    raf_exp_id = mlflow.set_experiment("Random-Forest Experiment")
+    with mlflow.start_run(experiment_id=raf_exp_id):
+        random_rf_model = RandomizedSearchCV(estimator=base_rf_model,
+                                                param_distributions=random_grid,
+                                                n_iter=100, cv=3, verbose=2,
+                                                random_state=0, n_jobs=-1)
+        classifier_rf_2 = random_rf_model.fit(X_train_RF, Y_train)
+
+        mlflow.log_params(random_grid)
+        mlflow.sklearn.log_model(random_rf_model.best_estimator_, "RF Classifier")
 
     pkl_file = "app/models/rf_model.pkl"
     dump(random_rf_model.best_estimator_, pkl_file)
@@ -185,26 +210,34 @@ def compare_models(acc_dt, acc_rf):
         os.rename('app/data/X_test_DT.csv', 'app/data/X_test.csv')
 
 def model_stats(classifier, X_test, Y_test):
-    Y_pred = classifier.predict(X_test)
-    cm = confusion_matrix(Y_test, Y_pred)
-    acc = round(accuracy_score(Y_test, Y_pred), ndigits=4)
-    f1 = round(f1_score(Y_test, Y_pred), ndigits=4)
-    corcoeff = round(matthews_corrcoef(Y_test, Y_pred), ndigits=4)
+    mlflow.set_tracking_uri('app/mlruns')
+    fin_exp_id = mlflow.set_experiment("Final Model Experiment")
+    with mlflow.start_run(experiment_id=fin_exp_id):
+        Y_pred = classifier.predict(X_test)
+        cm = confusion_matrix(Y_test, Y_pred)
+        acc = round(accuracy_score(Y_test, Y_pred), ndigits=4)
+        prc = round(precision_score(Y_test, Y_pred), ndigits=4)
+        rcl = round(recall_score(Y_test, Y_pred), ndigits=4)
+        f1 = round(f1_score(Y_test, Y_pred), ndigits=4)
+        corcoeff = round(matthews_corrcoef(Y_test, Y_pred), ndigits=4)
+
+        mlflow.log_metrics({'Accuracy Score': acc, 'Precision Score': prc, 'Recall Score':rcl, 'F1 Score':f1, 'Correlation Coefficient': corcoeff})
+        mlflow.sklearn.log_model(classifier, "Final Classifier")
+
     print("All Done",acc)
-    return cm, acc, f1, corcoeff
+    return cm, acc, prc, rcl, f1, corcoeff
 
 def retrain_model():    
     dataframe = fetch_data()
     dataframe = feat_engg(dataframe)
     dataframe_copy = dataframe
     X, X_train, X_test, Y_train, Y_test = split_data(dataframe)
-    X_test_RF, rf_classifier = rf_model(X, X_train, X_test, Y_train)
-    _, acc_rf, _, _ = model_stats(rf_classifier, X_test_RF, Y_test)
-
+    X_test_DT, dt_classifier = dec_tr_model(X, X_train, X_test, Y_train)
+    _, acc_dt, _, _, _, _ = model_stats(dt_classifier, X_test_DT, Y_test)
 
     X, X_train, X_test, Y_train, Y_test = split_data(dataframe_copy)
-    X_test_DT, dt_classifier = dec_tr_model(X, X_train, X_test, Y_train)
-    _, acc_dt, _, _ = model_stats(dt_classifier, X_test_DT, Y_test)
+    X_test_RF, rf_classifier = rf_model(X, X_train, X_test, Y_train)
+    _, acc_rf, _, _, _, _ = model_stats(rf_classifier, X_test_RF, Y_test)
 
     compare_models(acc_dt, acc_rf)
 
@@ -284,3 +317,59 @@ def corr_matrix(dataframe):
     plt.yticks(rotation=0)
     plt.savefig('app/static/cor_mat.svg', bbox_inches='tight')
     #return plt.show()
+
+def lime_expl(X_train, X_test, Y_test, classifier):
+    lime_explainer = lime.lime_tabular.LimeTabularExplainer(
+        X_train.to_numpy(), 
+        feature_names=X_train.columns.tolist()
+    )
+
+    i = np.random.randint(0, X_test.shape[0])
+    explanation = lime_explainer.explain_instance(
+        X_test.iloc[i], 
+        classifier.predict_proba,
+        num_features=5,
+        top_labels=1
+    )
+    print(f"Real value {Y_test.iloc[i]}")
+    explanation.save_to_file('app/static/lime_expl.html')
+
+def anchor_expl(X_train, X_test, classifier):
+    anchor_explainer = anchor_tabular.AnchorTabularExplainer(
+        class_names=["0", "1"],
+        feature_names=X_train.columns.tolist(),
+        train_data=X_train.to_numpy(),
+    )
+    i = np.random.randint(0, X_test.shape[0])
+    sample = X_test.iloc[i].to_numpy().reshape(1, -1)
+    prediction = classifier.predict(sample)[0]
+    anchor_explanation = anchor_explainer.explain_instance(
+        X_train.iloc[i].to_numpy(), 
+        classifier.predict,
+        threshold=0.95
+        )
+    exp = (" AND ".join(anchor_explanation.names()))
+    return exp, anchor_explainer.class_names[prediction], anchor_explanation.precision(), anchor_explanation.coverage()
+
+def shap_expl(X_train, X_test, classifier):
+    shap.initjs()
+    shap_explainer = shap.KernelExplainer(classifier.predict_proba, X_train[:100])
+    shap_values = shap_explainer.shap_values(X_test.iloc[0,:])
+    shap.force_plot(shap_explainer.expected_value[0], shap_values[0], X_test.iloc[0,:], show=False, matplotlib=True)
+    plt.savefig('app/static/shap_exp_1.svg', bbox_inches='tight')
+
+    """
+    shap_values = shap_explainer.shap_values(X_test.iloc[0:10,:])
+    shap.force_plot(shap_explainer.expected_value[0], shap_values[0], X_test.iloc[0:10,:], show=False)
+    plt.savefig('app/static/shap_exp_2.png', bbox_inches='tight')
+    """
+
+def tree_expl(classifier, X_train):
+    train_prediction = classifier.predict(X_train)
+
+    gs_explainer = DecisionTreeClassifier(max_depth=3)
+    gs_explainer.fit(X_train, train_prediction)
+    plt.figure(figsize=(25, 20))
+    plot_tree(gs_explainer, feature_names=X_train.columns, class_names=['unworn', 'worn'], fontsize=12)
+
+    plt.savefig('app/static/tree_expl.svg', bbox_inches='tight')
